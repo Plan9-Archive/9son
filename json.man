@@ -1,0 +1,190 @@
+.TH JSON 2
+.SH NAME
+Jinit, Jtokenise, Jfind, Jnext, Jtokstr \- JSON parser
+.SH SYNOPSIS
+.B #include <u.h>
+.br
+.B #include <libc.h>
+.br
+.B #include <json.h>
+.PP
+.nf
+.ft L
+typedef enum{
+	JBool,
+	JNum,
+	JNil,
+	JObj,
+	JArr,
+	JStr,
+} Jtype;
+.fi
+.PP
+.nf
+.ft L
+typedef struct{
+	Jtype type;
+	char *start;
+	char *end;
+	uint nsub;
+} Jtok;
+.fi
+.PP
+.nf
+.ft L
+typedef struct{
+	uint ntok, mtok;
+	Jtok *tokens;
+	uint stktop;
+	uint tokstk[JStksz];
+} Jparser;
+.fi
+.PP
+.B
+void Jinit(Jparser *p)
+.PP
+.B
+void Jterm(Jparser *p);
+.PP
+.B
+int Jtokenise(Jparser *p, char *s)
+.PP
+.B
+char *Jtokstr(Jtok *t)
+.PP
+.B
+int Jfind(Jparser *p, uint i, char *s)
+.PP
+.B
+uint Jnext(Jparser *p, uint i)
+.PP
+.SH DESCRIPTION
+These routines implement a fast, in-memory JSON parser.  The parser
+operates on a string which is expected to contain the full JSON text.
+The string is not altered in any way.
+.PP
+A parser object
+.I p
+is initialised using
+.IR Jinit .
+The parser object contains the number of tokens found
+.I ntok
+and an array of tokens
+.IR tokens .
+The other fields are for internal use.  As memory is dynamically
+allocated, an initialised parser
+.I p
+must be terminated with
+.I Jterm
+after use.
+.PP
+An initialised parser object is populated with tokens using
+.IR Jtokenise .
+.I Jtokenise
+accepts parser
+.I p
+and a string
+.I s
+and returns a filled
+.I Jparser
+structure containing tokens found in
+.IR s .
+.I S
+is unaltered.
+.PP
+Each token
+.I Jtoken
+has a type
+.IR Jtype ,
+pointers to the
+.I start
+and 
+.I end
+of the token's location in the JSON string,
+and a count
+.I nsub
+of the number of subtokens.  The types of a token are
+.TP
+.I JBool
+Boolean value.  Token must be either 't' or 'f'.
+.TP
+.I JNum
+A real number.
+.TP
+.I JNil
+Nill token matching 'n'.
+.TP
+.I JObj
+An object (dictionary) containing key:value pairs.
+.TP
+.I JArr
+An array.
+.TP
+.I JStr
+A string.
+.PP
+The pointers
+.I start
+and
+.I end
+point to the beginning character of the token and to one character
+after the end of the token respectively.  The exception are
+.I JStr
+tokens, where
+.I start
+points to the first character after the double quote and
+.I end
+points to the terminating double quote.  As arrays
+.I JArr
+and objects
+.I JObj
+are the only types allowing subelements, 
+.I nsub
+is necessarily 0 for 
+.IR JBool ,
+.IR JNum ,
+.IR JNil ,
+and
+.IR JStr .
+.PP
+The functions
+.IR Jtokstr ,
+.IR Jfind
+and
+.I Jnext are functions for working with the tokens.
+.I Jtokstr
+takes a token and extracts out the string pointed to by the token.
+The string is null terminated and escaped characters are handled
+appropriately.  As
+.I Jtokstr
+uses a static buffer, the string returned is destroyed on the next
+call.
+.PP
+.I Jfind
+is used to find specifically named attributes within a 
+.IR JObj .
+Given an index into the
+.I tokens
+array of
+.IR p –
+which must be a
+.I JObj
+– and the name of an attribute
+.IR s ,
+.I Jfind
+returns the index of the token corresponding to the value matching the
+attribute name.  If no attribute is found then
+.I Jfind
+returns -1.
+.PP
+Finally,
+.I Jnext
+takes and index and calculates the index of the next element at that
+depth.  It is used for skipping over
+.IR JObj s
+and
+.IR JArr s
+which can contain a number of subelements.
+.SH BUGS
+The parser does not implement a full grammar so some JSON errors are
+not detected when parsing.

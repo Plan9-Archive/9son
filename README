@@ -1,0 +1,198 @@
+
+
+
+     JSON(2)                                                   JSON(2)
+
+
+
+
+
+     NAME
+          Jinit, Jtokenise, Jfind, Jnext, Jtokstr - JSON parser
+
+     SYNOPSIS
+          #include <u.h>
+          #include <libc.h>
+          #include <json.h>
+
+          typedef enum{
+               JBool,
+               JNum,
+               JNil,
+               JObj,
+               JArr,
+               JStr,
+          } Jtype;
+
+          typedef struct{
+               Jtype type;
+               char *start;
+               char *end;
+               uint nsub;
+          } Jtok;
+
+          typedef struct{
+               uint ntok, mtok;
+               Jtok *tokens;
+               uint stktop;
+               uint tokstk[JStksz];
+          } Jparser;
+
+          void Jinit(Jparser *p)
+
+          void Jterm(Jparser *p);
+
+          int Jtokenise(Jparser *p, char *s)
+
+          char *Jtokstr(Jtok *t)
+
+          int Jfind(Jparser *p, uint i, char *s)
+
+          uint Jnext(Jparser *p, uint i)
+
+     DESCRIPTION
+          These routines implement a fast, in-memory JSON parser.  The
+          parser operates on a string which is expected to contain the
+          full JSON text.  The string is not altered in any way.
+
+          A parser object p is initialised using Jinit. The parser
+          object contains the number of tokens found ntok and an array
+
+
+
+
+
+
+
+
+
+
+     JSON(2)                                                   JSON(2)
+
+
+
+          of tokens tokens. The other fields are for internal use.  As
+          memory is dynamically allocated, an initialised parser p
+          must be terminated with Jterm after use.
+
+          An initialised parser object is populated with tokens using
+          Jtokenise. Jtokenise accepts parser p and a string s and
+          returns a filled Jparser structure containing tokens found
+          in s. S is unaltered.
+
+          Each token Jtoken has a type Jtype, pointers to the start
+          and end of the token's location in the JSON string, and a
+          count nsub of the number of subtokens.  The types of a token
+          are
+
+          JBool
+               Boolean value.  Token must be either 't' or 'f'.
+
+          JNum A real number.
+
+          JNil Nill token matching 'n'.
+
+          JObj An object (dictionary) containing key:value pairs.
+
+          JArr An array.
+
+          JStr A string.
+
+          The pointers start and end point to the beginning character
+          of the token and to one character after the end of the token
+          respectively.  The exception are JStr tokens, where start
+          points to the first character after the double quote and end
+          points to the terminating double quote.  As arrays JArr and
+          objects JObj are the only types allowing subelements, nsub
+          is necessarily 0 for JBool, JNum, JNil, and JStr.
+
+          The functions Jtokstr, Jfind and Jnext are functions for
+          working with Jtokstr takes a token and extracts out the
+          string pointed to by the token.  The string is null termi-
+          nated and escaped characters are handled appropriately.  As
+          Jtokstr uses a static buffer, the string returned is
+          destroyed on the next call.
+
+          Jfind is used to find specifically named attributes within a
+          JObj. Given an index into the tokens array of p– which must
+          be a JObj – and the name of an attribute s, Jfind returns
+          the index of the token corresponding to the value matching
+          the attribute name.  If no attribute is found then Jfind
+          returns -1.
+
+          Finally, Jnext takes and index and calculates the index of
+          the next element at that depth.  It is used for skipping
+          over JObjs and JArrs which can contain a number of
+
+
+
+
+
+
+
+
+
+
+     JSON(2)                                                   JSON(2)
+
+
+
+          subelements.
+
+     BUGS
+          The parser does not implement a full grammar so some JSON
+          errors are not detected when parsing.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
