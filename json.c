@@ -147,7 +147,8 @@ Jmatcherr:
 			tok = gettok(p);
 			tok->type = JBool;
 			tok->start = s;
-			tok->end = s + 1;
+			s = saccept(s, "truefalse");
+			tok->end = s--;
 			incnsub(p);
 			continue;
 		}
@@ -156,7 +157,8 @@ Jmatcherr:
 			tok = gettok(p);
 			tok->type = JNil;
 			tok->start = s;
-			tok->end = s + 1;
+			s = saccept(s, "null");
+			tok->end = s--;
 			incnsub(p);
 			continue;
 		}
